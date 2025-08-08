@@ -1,247 +1,211 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-config.js';
+// script.js - Manejo del widget modal y formularios sin usar import para evitar error "use import statement outside a module"
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_URL = 'https://jrkftgeobchmctpqeesi.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impya2Z0Z2VvYmNobWN0cHFlZXNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ2NzIzOTMsImV4cCI6MjA3MDI0ODM5M30.MYprdcXdz25yQXzMqPobGRXMb4ng7UuK2ZjNZWr2Y0Q';
 
-// Mobile Navigation Toggle
-const hamburger = document.querySelector('.hamburger');
-const navMenu = document.querySelector('.nav-menu');
-
-hamburger.addEventListener('click', () => {
-    hamburger.classList.toggle('active');
-    navMenu.classList.toggle('active');
-});
-
-// Close mobile menu when clicking on a link
-document.querySelectorAll('.nav-menu a').forEach(link => {
-    link.addEventListener('click', () => {
-        hamburger.classList.remove('active');
-        navMenu.classList.remove('active');
-    });
-});
-
-// Smooth scrolling for anchor links
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-            target.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
-        }
-    });
-});
-
-// Form submission handling
-const contactForm = document.getElementById('contactForm');
-if (contactForm) {
-    contactForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        // Get form data
-        const formData = new FormData(this);
-        const data = Object.fromEntries(formData);
-        
-        // Simple form validation
-        if (!data.nombre || !data.email || !data.mensaje) {
-            alert('Por favor complete todos los campos obligatorios.');
-            return;
-        }
-        
-        // Email validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(data.email)) {
-            alert('Por favor ingrese un email válido.');
-            return;
-        }
-        
-        // Send data to Supabase
-        const { error } = await supabase
-            .from('citas')
-            .insert([
-                {
-                    nombre: data.nombre,
-                    email: data.email,
-                    telefono: data.telefono || '',
-                    mensaje: data.mensaje,
-                    fecha_creacion: new Date().toISOString()
-                }
-            ]);
-        
-        if (error) {
-            alert('Error al enviar el mensaje. Por favor intenta de nuevo.');
-            console.error(error);
-            return;
-        }
-        
-        alert('¡Gracias por tu mensaje! Nos pondremos en contacto contigo pronto.');
-        this.reset();
-    });
+function loadSupabaseScript(callback) {
+  const script = document.createElement('script');
+  script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js';
+  script.onload = callback;
+  document.head.appendChild(script);
 }
 
-// Scroll reveal animation
-const observerOptions = {
-    threshold: 0.1,
-    rootMargin: '0px 0px -50px 0px'
-};
+function initApp() {
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.classList.add('fade-in');
-        }
+  const openBookingWidgetBtn = document.getElementById('openBookingWidget');
+  const bookingModalOverlay = document.getElementById('bookingModalOverlay');
+  const closeBookingModalBtn = document.getElementById('closeBookingModal');
+
+  const services = [
+    { id: 1, name: 'Corte de Cabello', description: 'Corte personalizado según tu estilo', price: 25, duration: 45 },
+    { id: 2, name: 'Peinado Profesional', description: 'Peinados para eventos especiales', price: 20, duration: 30 },
+    { id: 3, name: 'Tinte Completo', description: 'Color uniforme y duradero', price: 45, duration: 120 }
+  ];
+
+  let currentStep = 1;
+  let selectedService = null;
+  let selectedDate = null;
+
+  const step1 = document.getElementById('step1');
+  const step2 = document.getElementById('step2');
+  const step3 = document.getElementById('step3');
+  const modalTitle = document.getElementById('modalTitle');
+  const backBtn = document.getElementById('backBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const serviceList = document.getElementById('serviceList');
+  const dateInput = document.getElementById('dateInput');
+  const serviceSummaryStep2 = document.getElementById('serviceSummaryStep2');
+  const serviceSummaryStep3 = document.getElementById('serviceSummaryStep3');
+  const fullName = document.getElementById('fullName');
+  const email = document.getElementById('email');
+  const phone = document.getElementById('phone');
+  const comments = document.getElementById('comments');
+
+  function renderServices() {
+    serviceList.innerHTML = '';
+    services.forEach(service => {
+      const div = document.createElement('div');
+      div.className = 'service-item';
+      div.textContent = `${service.name} - $${service.price}`;
+      div.title = service.description + ' - ' + service.duration + ' minutos';
+      div.onclick = () => {
+        selectedService = service;
+        updateServiceSelection();
+        nextBtn.disabled = false;
+      };
+      if (selectedService && selectedService.id === service.id) {
+        div.classList.add('selected');
+      }
+      serviceList.appendChild(div);
     });
-}, observerOptions);
+  }
 
-// Apply animation to elements
-document.querySelectorAll('.servicio-card, .galeria-item, .categoria').forEach(el => {
-    observer.observe(el);
-});
+  function updateServiceSelection() {
+    renderServices();
+  }
 
-// Dynamic year in footer
-const currentYear = new Date().getFullYear();
-document.querySelector('.footer p:last-child').innerHTML = 
-    `&copy; ${currentYear} Salon Meraki. Todos los derechos reservados.`;
+  function updateStep() {
+    step1.style.display = currentStep === 1 ? 'block' : 'none';
+    step2.style.display = currentStep === 2 ? 'block' : 'none';
+    step3.style.display = currentStep === 3 ? 'block' : 'none';
 
-// Lazy loading for images
-const lazyImages = document.querySelectorAll('img[data-src]');
-const imageObserver = new IntersectionObserver((entries, observer) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            const img = entry.target;
-            img.src = img.dataset.src;
-            img.classList.remove('lazy');
-            imageObserver.unobserve(img);
-        }
-    });
-});
+    backBtn.disabled = currentStep === 1;
+    nextBtn.textContent = currentStep === 3 ? 'Confirmar Reserva' : 'Continuar';
 
-lazyImages.forEach(img => imageObserver.observe(img));
+    modalTitle.textContent = currentStep === 1 ? 'Seleccionar Servicio' :
+                             currentStep === 2 ? 'Fecha y Hora' :
+                             'Información Personal';
 
-// Back to top button
-const backToTopButton = document.createElement('button');
-backToTopButton.innerHTML = '<i class="fas fa-arrow-up"></i>';
-backToTopButton.className = 'back-to-top';
-document.body.appendChild(backToTopButton);
-
-window.addEventListener('scroll', () => {
-    if (window.pageYOffset > 300) {
-        backToTopButton.classList.add('show');
+    if (currentStep === 2) {
+      // Set min date to today
+      const today = new Date().toISOString().split('T')[0];
+      dateInput.min = today;
+      dateInput.value = selectedDate || today;
+      updateSummaryStep2();
+      nextBtn.disabled = !selectedDate;
+    } else if (currentStep === 3) {
+      updateSummaryStep3();
+      nextBtn.disabled = !fullName.value || !email.value;
     } else {
-        backToTopButton.classList.remove('show');
+      nextBtn.disabled = !selectedService;
     }
-});
+  }
 
-backToTopButton.addEventListener('click', () => {
-    window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-    });
-});
+  function updateSummaryStep2() {
+    if (!selectedService) return;
+    serviceSummaryStep2.innerHTML = `
+      <strong>Resumen del Servicio</strong><br/>
+      Servicio: ${selectedService.name}<br/>
+      Duración: ${selectedService.duration} minutos<br/>
+      Precio: $${selectedService.price}
+    `;
+  }
 
-// CSS for back to top button
-const style = document.createElement('style');
-style.textContent = `
-    .back-to-top {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background: var(--accent-color);
-        color: var(--text-color);
-        border: none;
-        border-radius: 50%;
-        width: 50px;
-        height: 50px;
-        cursor: pointer;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s ease;
-        z-index: 1000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.2rem;
+  function updateSummaryStep3() {
+    if (!selectedService) return;
+    serviceSummaryStep3.innerHTML = `
+      <strong>Resumen de tu Cita</strong><br/>
+      Servicio: ${selectedService.name}<br/>
+      Fecha: ${dateInput.value}<br/>
+      Hora: 15:00<br/>
+      Duración: ${selectedService.duration} min<br/>
+      Precio: $${selectedService.price}
+    `;
+  }
+
+  backBtn.addEventListener('click', () => {
+    if (currentStep > 1) {
+      currentStep--;
+      updateStep();
     }
+  });
 
-    .back-to-top.show {
-        opacity: 1;
-        visibility: visible;
+  nextBtn.addEventListener('click', () => {
+    if (currentStep === 1 && selectedService) {
+      currentStep++;
+      updateStep();
+    } else if (currentStep === 2 && dateInput.value) {
+      selectedDate = dateInput.value;
+      currentStep++;
+      updateStep();
+    } else if (currentStep === 3) {
+      if (!fullName.value || !email.value) {
+        alert('Por favor, completa los campos obligatorios.');
+        return;
+      }
+      // Enviar reserva a Supabase
+      supabase
+        .from('citas')
+        .insert([{
+          nombre: fullName.value,
+          email: email.value,
+          telefono: phone.value,
+          mensaje: comments.value + `\nServicio: ${selectedService.name}, Fecha: ${dateInput.value}, Duración: ${selectedService.duration} min, Precio: $${selectedService.price}`
+        }])
+        .then(({ data, error }) => {
+          if (error) {
+            alert('Error al enviar la reserva: ' + error.message);
+          } else {
+            alert('Reserva confirmada. ¡Gracias, ' + fullName.value + '!');
+            // Resetear formulario y estado
+            currentStep = 1;
+            selectedService = null;
+            selectedDate = null;
+            fullName.value = '';
+            email.value = '';
+            phone.value = '';
+            comments.value = '';
+            updateStep();
+            closeModal();
+          }
+        });
     }
+  });
 
-    .back-to-top:hover {
-        transform: translateY(-3px);
+  fullName.addEventListener('input', () => {
+    nextBtn.disabled = !fullName.value || !email.value;
+  });
+
+  email.addEventListener('input', () => {
+    nextBtn.disabled = !fullName.value || !email.value;
+  });
+
+  function openModal() {
+    bookingModalOverlay.style.display = 'block';
+    currentStep = 1;
+    selectedService = null;
+    selectedDate = null;
+    fullName.value = '';
+    email.value = '';
+    phone.value = '';
+    comments.value = '';
+    updateStep();
+  }
+
+  function closeModal() {
+    bookingModalOverlay.style.display = 'none';
+  }
+
+  openBookingWidgetBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    openModal();
+  });
+
+  closeBookingModalBtn.addEventListener('click', () => {
+    closeModal();
+  });
+
+  // Cerrar modal al hacer clic fuera del contenido
+  bookingModalOverlay.addEventListener('click', (e) => {
+    if (e.target === bookingModalOverlay) {
+      closeModal();
     }
+  });
 
-    .fade-in {
-        opacity: 0;
-        transform: translateY(20px);
-        transition: opacity 0.6s ease, transform 0.6s ease;
-    }
+  // Inicializar servicios y estado
+  renderServices();
+  updateStep();
+}
 
-    .fade-in {
-        opacity: 1;
-        transform: translateY(0);
-    }
-`;
-document.head.appendChild(style);
-
-// Parallax effect for hero section
-window.addEventListener('scroll', () => {
-    const scrolled = window.pageYOffset;
-    const hero = document.querySelector('.hero');
-    if (hero) {
-        hero.style.transform = `translateY(${scrolled * 0.5}px)`;
-    }
-});
-
-// Counter animation for statistics
-const counters = document.querySelectorAll('.counter');
-const counterObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            const target = entry.target;
-            const countTo = parseInt(target.getAttribute('data-count'));
-            let count = 0;
-            const increment = countTo / 100;
-            
-            const updateCount = () => {
-                if (count < countTo) {
-                    count += increment;
-                    target.textContent = Math.ceil(count);
-                    setTimeout(updateCount, 20);
-                } else {
-                    target.textContent = countTo;
-                }
-            };
-            
-            updateCount();
-            counterObserver.unobserve(target);
-        }
-    });
-});
-
-// Initialize counters if they exist
-document.querySelectorAll('.counter').forEach(counter => {
-    counterObserver.observe(counter);
-});
-
-// Preloader
-window.addEventListener('load', () => {
-    document.body.classList.add('loaded');
-});
-
-// Add preloader CSS
-const preloaderStyle = document.createElement('style');
-preloaderStyle.textContent = `
-    body {
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-    
-    body.loaded {
-        opacity: 1;
-    }
-`;
-document.head.appendChild(preloaderStyle);
+document.addEventListener('DOMContentLoaded', initApp);

@@ -36,7 +36,62 @@
         <div class="hero-content">
             <h2>Belleza que inspira</h2>
             <p>Transformamos tu estilo con pasión y profesionalismo en cada detalle</p>
-            <a href="#reservar" class="cta-button">Reservar Cita</a>
+    <a href="#" class="cta-button" id="openBookingWidget">Reservar Cita</a>
+
+    <!-- Sección Reservar Cita -->
+    <div id="bookingModalOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:9999;">
+      <div id="bookingModal" style="max-width:400px; margin: 50px auto; background:#fff; border-radius:8px; box-shadow:0 0 15px rgba(0,0,0,0.2); padding:20px; position:relative;">
+        <button id="closeBookingModal" style="position:absolute; top:10px; right:10px; background:none; border:none; font-size:20px; cursor:pointer;">&times;</button>
+        <h2 id="modalTitle">Seleccionar Servicio</h2>
+        <div class="step-indicator" style="display:flex; justify-content:center; margin-bottom:20px;">
+          <div class="step active" id="step1Indicator" style="width:30px; height:30px; border-radius:50%; background:#f4d03f; color:#333; line-height:30px; text-align:center; margin:0 10px; font-weight:600;">1</div>
+          <div class="step" id="step2Indicator" style="width:30px; height:30px; border-radius:50%; background:#ddd; color:#999; line-height:30px; text-align:center; margin:0 10px; font-weight:600;">2</div>
+          <div class="step" id="step3Indicator" style="width:30px; height:30px; border-radius:50%; background:#ddd; color:#999; line-height:30px; text-align:center; margin:0 10px; font-weight:600;">3</div>
+        </div>
+
+        <div id="step1" class="step-content">
+          <p>Selecciona el servicio que necesitas para tu cita</p>
+          <div class="service-list" id="serviceList" style="max-height:150px; overflow-y:auto; border:1px solid #ccc; border-radius:5px;">
+            <!-- Servicios se cargarán aquí -->
+          </div>
+        </div>
+
+        <div id="step2" class="step-content" style="display:none;">
+          <p>Selecciona cuando quieres tu cita</p>
+          <div class="form-group" style="margin-bottom:15px;">
+            <label for="dateInput" style="display:block; font-weight:500; margin-bottom:5px;">Fecha</label>
+            <input type="date" id="dateInput" min="" style="width:100%; padding:8px 10px; border:1px solid #ccc; border-radius:5px; font-family:inherit; font-size:1rem;" />
+          </div>
+          <div class="summary" id="serviceSummaryStep2" style="background:#f9f9f9; padding:10px; border-radius:5px; font-size:0.9rem; margin-top:10px;"></div>
+        </div>
+
+        <div id="step3" class="step-content" style="display:none;">
+          <p>Completa tus datos personales para finalizar la reserva</p>
+          <div class="form-group" style="margin-bottom:15px;">
+            <label for="fullName" style="display:block; font-weight:500; margin-bottom:5px;">Nombre Completo</label>
+            <input type="text" id="fullName" placeholder="Tu nombre completo" style="width:100%; padding:8px 10px; border:1px solid #ccc; border-radius:5px; font-family:inherit; font-size:1rem;" />
+          </div>
+          <div class="form-group" style="margin-bottom:15px;">
+            <label for="email" style="display:block; font-weight:500; margin-bottom:5px;">Email</label>
+            <input type="email" id="email" placeholder="tu@email.com" style="width:100%; padding:8px 10px; border:1px solid #ccc; border-radius:5px; font-family:inherit; font-size:1rem;" />
+          </div>
+          <div class="form-group" style="margin-bottom:15px;">
+            <label for="phone" style="display:block; font-weight:500; margin-bottom:5px;">Teléfono</label>
+            <input type="tel" id="phone" placeholder="(555) 123-4567" style="width:100%; padding:8px 10px; border:1px solid #ccc; border-radius:5px; font-family:inherit; font-size:1rem;" />
+          </div>
+          <div class="form-group" style="margin-bottom:15px;">
+            <label for="comments" style="display:block; font-weight:500; margin-bottom:5px;">Comentarios (Opcional)</label>
+            <textarea id="comments" placeholder="Cualquier comentario especial..." style="width:100%; padding:8px 10px; border:1px solid #ccc; border-radius:5px; font-family:inherit; font-size:1rem; resize:vertical;"></textarea>
+          </div>
+          <div class="summary" id="serviceSummaryStep3" style="background:#f9f9f9; padding:10px; border-radius:5px; font-size:0.9rem; margin-top:10px;"></div>
+        </div>
+
+        <div class="buttons" style="display:flex; justify-content:space-between; margin-top:20px;">
+          <button id="backBtn" disabled style="background:#f4d03f; border:none; padding:10px 20px; border-radius:25px; font-weight:600; cursor:pointer; color:#333; transition:background 0.3s ease;">Atrás</button>
+          <button id="nextBtn" disabled style="background:#f4d03f; border:none; padding:10px 20px; border-radius:25px; font-weight:600; cursor:pointer; color:#333; transition:background 0.3s ease;">Continuar</button>
+        </div>
+      </div>
+    </div>
         </div>
     </section>
 

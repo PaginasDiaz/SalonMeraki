@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Reserva de Cita - Salon Meraki</title>
+<style>
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: #f5f5f5;
+    margin: 0;
+    padding: 20px;
+  }
+  .modal {
+    max-width: 400px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    padding: 20px;
+  }
+  h2 {
+    margin-top: 0;
+    font-weight: 600;
+    color: #333;
+  }
+  .step-indicator {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .step {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #ddd;
+    color: #999;
+    line-height: 30px;
+    text-align: center;
+    margin: 0 10px;
+    font-weight: 600;
+  }
+  .step.active {
+    background: #f4d03f;
+    color: #333;
+  }
+  .form-group {
+    margin-bottom: 15px;
+  }
+  label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 5px;
+  }
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="date"],
+  textarea,
+  select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-family: inherit;
+    font-size: 1rem;
+  }
+  textarea {
+    resize: vertical;
+  }
+  .service-list {
+    max-height: 150px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  .service-item {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+  }
+  .service-item:last-child {
+    border-bottom: none;
+  }
+  .service-item:hover,
+  .service-item.selected {
+    background: #f4d03f;
+    color: #333;
+  }
+  .summary {
+    background: #f9f9f9;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    margin-top: 10px;
+  }
+  .buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+  }
+  button {
+    background: #f4d03f;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #333;
+    transition: background 0.3s ease;
+  }
+  button:disabled {
+    background: #ddd;
+    cursor: not-allowed;
+  }
+  button:hover:not(:disabled) {
+    background: #d4b30f;
+  }
+</style>
+</head>
+<body>
+<div class="modal" id="bookingModal">
+  <h2 id="modalTitle">Seleccionar Servicio</h2>
+  <div class="step-indicator">
+    <div class="step active" id="step1Indicator">1</div>
+    <div class="step" id="step2Indicator">2</div>
+    <div class="step" id="step3Indicator">3</div>
+  </div>
+
+  <div id="step1" class="step-content">
+    <p>Selecciona el servicio que necesitas para tu cita</p>
+    <div class="service-list" id="serviceList">
+      <!-- Servicios se cargarán aquí -->
+    </div>
+  </div>
+
+  <div id="step2" class="step-content" style="display:none;">
+    <p>Selecciona cuando quieres tu cita</p>
+    <div class="form-group">
+      <label for="dateInput">Fecha</label>
+      <input type="date" id="dateInput" min="" />
+    </div>
+    <div class="summary" id="serviceSummaryStep2"></div>
+  </div>
+
+  <div id="step3" class="step-content" style="display:none;">
+    <p>Completa tus datos personales para finalizar la reserva</p>
+    <div class="form-group">
+      <label for="fullName">Nombre Completo</label>
+      <input type="text" id="fullName" placeholder="Tu nombre completo" />
+    </div>
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="tu@email.com" />
+    </div>
+    <div class="form-group">
+      <label for="phone">Teléfono</label>
+      <input type="tel" id="phone" placeholder="(555) 123-4567" />
+    </div>
+    <div class="form-group">
+      <label for="comments">Comentarios (Opcional)</label>
+      <textarea id="comments" placeholder="Cualquier comentario especial..."></textarea>
+    </div>
+    <div class="summary" id="serviceSummaryStep3"></div>
+  </div>
+
+  <div class="buttons">
+    <button id="backBtn" disabled>Atrás</button>
+    <button id="nextBtn" disabled>Continuar</button>
+  </div>
+</div>
+
+<script>
+  const services = [
+    { id: 1, name: 'Corte de Cabello', description: 'Corte personalizado según tu estilo', price: 25, duration: 45 },
+    { id: 2, name: 'Peinado Profesional', description: 'Peinados para eventos especiales', price: 20, duration: 30 },
+    { id: 3, name: 'Tinte Completo', description: 'Color uniforme y duradero', price: 45, duration: 120 }
+  ];
+
+  let currentStep = 1;
+  let selectedService = null;
+  let selectedDate = null;
+
+  const step1 = document.getElementById('step1');
+  const step2 = document.getElementById('step2');
+  const step3 = document.getElementById('step3');
+  const modalTitle = document.getElementById('modalTitle');
+  const backBtn = document.getElementById('backBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const serviceList = document.getElementById('serviceList');
+  const dateInput = document.getElementById('dateInput');
+  const serviceSummaryStep2 = document.getElementById('serviceSummaryStep2');
+  const serviceSummaryStep3 = document.getElementById('serviceSummaryStep3');
+  const fullName = document.getElementById('fullName');
+  const email = document.getElementById('email');
+  const phone = document.getElementById('phone');
+  const comments = document.getElementById('comments');
+
+  function renderServices() {
+    serviceList.innerHTML = '';
+    services.forEach(service => {
+      const div = document.createElement('div');
+      div.className = 'service-item';
+      div.textContent = `${service.name} - $${service.price}`;
+      div.title = service.description + ' - ' + service.duration + ' minutos';
+      div.onclick = () => {
+        selectedService = service;
+        updateServiceSelection();
+        nextBtn.disabled = false;
+      };
+      if (selectedService && selectedService.id === service.id) {
+        div.classList.add('selected');
+      }
+      serviceList.appendChild(div);
+    });
+  }
+
+  function updateServiceSelection() {
+    renderServices();
+  }
+
+  function updateStep() {
+    step1.style.display = currentStep === 1 ? 'block' : 'none';
+    step2.style.display = currentStep === 2 ? 'block' : 'none';
+    step3.style.display = currentStep === 3 ? 'block' : 'none';
+
+    backBtn.disabled = currentStep === 1;
+    nextBtn.textContent = currentStep === 3 ? 'Confirmar Reserva' : 'Continuar';
+
+    modalTitle.textContent = currentStep === 1 ? 'Seleccionar Servicio' :
+                             currentStep === 2 ? 'Fecha y Hora' :
+                             'Información Personal';
+
+    if (currentStep === 2) {
+      // Set min date to today
+      const today = new Date().toISOString().split('T')[0];
+      dateInput.min = today;
+      dateInput.value = selectedDate || today;
+      updateSummaryStep2();
+      nextBtn.disabled = !selectedDate;
+    } else if (currentStep === 3) {
+      updateSummaryStep3();
+      nextBtn.disabled = !fullName.value || !email.value;
+    } else {
+      nextBtn.disabled = !selectedService;
+    }
+  }
+
+  function updateSummaryStep2() {
+    if (!selectedService) return;
+    serviceSummaryStep2.innerHTML = `
+      <strong>Resumen del Servicio</strong><br/>
+      Servicio: ${selectedService.name}<br/>
+      Duración: ${selectedService.duration} minutos<br/>
+      Precio: $${selectedService.price}
+    `;
+  }
+
+  function updateSummaryStep3() {
+    if (!selectedService) return;
+    serviceSummaryStep3.innerHTML = `
+      <strong>Resumen de tu Cita</strong><br/>
+      Servicio: ${selectedService.name}<br/>
+      Fecha: ${dateInput.value}<br/>
+      Hora: 15:00<br/>
+      Duración: ${selectedService.duration} min<br/>
+      Precio: $${selectedService.price}
+    `;
+  }
+
+  backBtn.addEventListener('click', () => {
+    if (currentStep > 1) {
+      currentStep--;
+      updateStep();
+    }
+  });
+
+  nextBtn.addEventListener('click', () => {
+    if (currentStep === 1 && selectedService) {
+      currentStep++;
+      updateStep();
+    } else if (currentStep === 2 && dateInput.value) {
+      selectedDate = dateInput.value;
+      currentStep++;
+      updateStep();
+    } else if (currentStep === 3) {
+      if (!fullName.value || !email.value) {
+        alert('Por favor, completa los campos obligatorios.');
+        return;
+      }
+      // Aquí se puede agregar la lógica para enviar la reserva a Supabase
+      alert('Reserva confirmada. ¡Gracias, ' + fullName.value + '!');
+      // Resetear formulario y estado
+      currentStep = 1;
+      selectedService = null;
+      selectedDate = null;
+      fullName.value = '';
+      email.value = '';
+      phone.value = '';
+      comments.value = '';
+      updateStep();
+    }
+  });
+
+  fullName.addEventListener('input', () => {
+    nextBtn.disabled = !fullName.value || !email.value;
+  });
+
+  email.addEventListener('input', () => {
+    nextBtn.disabled = !fullName.value || !email.value;
+  });
+
+  // Inicializar
+  renderServices();
+  updateStep();
+</script>
+</body>
+</html>
