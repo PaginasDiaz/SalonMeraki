@@ -1,0 +1,3 @@
+// Configuración de Supabase para Salon Meraki
+export const SUPABASE_URL = 'https://jrkftgeobchmctpqeesi.supabase.co';
+export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impya2Z0Z2VvYmNobWN0cHFlZXNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ2NzIzOTMsImV4cCI6MjA3MDI0ODM5M30.MYprdcXdz25yQXzMqPobGRXMb4ng7UuK2ZjNZWr2Y0Q';
